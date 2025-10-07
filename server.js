@@ -1,5 +1,10 @@
 const http = require('http');
 const url = require('url');
+require('dotenv').config();
+
+// Import database and routes
+const { testConnection, initializeDatabase } = require('./config/database');
+const { handleUserRoutes } = require('./src/routes/userRoutes');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -39,7 +44,7 @@ const handleNotFound = (req, res) => {
 };
 
 // Main request handler
-const requestHandler = (req, res) => {
+const requestHandler = async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const path = parsedUrl.pathname;
   const method = req.method.toLowerCase();
@@ -50,6 +55,12 @@ const requestHandler = (req, res) => {
   // Route handling
   if (method === 'get' && path === '/') {
     handleRootRoute(req, res);
+  } else if (path.startsWith('/users')) {
+    // Handle user routes
+    const routeHandled = await handleUserRoutes(req, res, method, path, parsedUrl);
+    if (!routeHandled) {
+      handleNotFound(req, res);
+    }
   } else {
     handleNotFound(req, res);
   }
@@ -70,8 +81,30 @@ server.on('error', (error) => {
 });
 
 // Start the server
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    // Test database connection
+    await testConnection();
+
+    // Initialize database tables
+    await initializeDatabase();
+
+    // Start the server
+    server.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+      console.log('Available endpoints:');
+      console.log('  GET    /users       - Get all users');
+      console.log('  GET    /users/:id   - Get user by ID');
+      console.log('  POST   /users       - Create new user');
+      console.log('  PATCH  /users/:id   - Update user');
+      console.log('  DELETE /users/:id   - Delete user');
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 
