@@ -6,6 +6,7 @@ class User {
     this.name = data.name;
     this.email = data.email;
     this.role = data.role;
+    this.tickets = data.tickets || [];
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -28,7 +29,7 @@ class User {
       'SELECT * FROM users WHERE id = $1',
       [id]
     );
-    
+
     return result.rows.length > 0 ? new User(result.rows[0]) : null;
   }
 
@@ -115,12 +116,43 @@ class User {
     return result.rows.length > 0;
   }
 
+  static async addTicketToUser(userId, ticketId) {
+    await query(
+      'UPDATE users SET tickets = array_append(tickets, $1) WHERE id = $2',
+      [ticketId, userId]
+    );
+  }
+
+  static async removeTicketFromUser(userId, ticketId) {
+    await query(
+      'UPDATE users SET tickets = array_remove(tickets, $1) WHERE id = $2',
+      [ticketId, userId]
+    );
+  }
+
+  static async addTicketToUsers(userIds, ticketId) {
+    for (const userId of userIds) {
+      if (userId) {
+        await this.addTicketToUser(userId, ticketId);
+      }
+    }
+  }
+
+  static async removeTicketFromUsers(userIds, ticketId) {
+    for (const userId of userIds) {
+      if (userId) {
+        await this.removeTicketFromUser(userId, ticketId);
+      }
+    }
+  }
+
   toJSON() {
     return {
       id: this.id,
       name: this.name,
       email: this.email,
       role: this.role,
+      tickets: this.tickets || [],
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };

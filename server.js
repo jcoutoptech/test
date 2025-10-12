@@ -5,6 +5,7 @@ require('dotenv').config();
 // Import database and routes
 const { testConnection, initializeDatabase } = require('./config/database');
 const { handleUserRoutes } = require('./src/routes/userRoutes');
+const { handleTicketRoutes } = require('./src/routes/ticketRoutes');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -61,6 +62,12 @@ const requestHandler = async (req, res) => {
     if (!routeHandled) {
       handleNotFound(req, res);
     }
+  } else if (path.startsWith('/tickets')) {
+    // Handle ticket routes
+    const routeHandled = await handleTicketRoutes(req, res, method, path, parsedUrl);
+    if (!routeHandled) {
+      handleNotFound(req, res);
+    }
   } else {
     handleNotFound(req, res);
   }
@@ -93,11 +100,18 @@ const startServer = async () => {
     server.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);
       console.log('Available endpoints:');
+      console.log('User endpoints:');
       console.log('  GET    /users       - Get all users');
       console.log('  GET    /users/:id   - Get user by ID');
       console.log('  POST   /users       - Create new user');
       console.log('  PATCH  /users/:id   - Update user');
       console.log('  DELETE /users/:id   - Delete user');
+      console.log('Ticket endpoints:');
+      console.log('  GET    /tickets     - Get all tickets (with filters)');
+      console.log('  GET    /tickets/:id - Get ticket by ID');
+      console.log('  POST   /tickets     - Create new ticket (admin only)');
+      console.log('  PATCH  /tickets/:id - Update ticket');
+      console.log('  DELETE /tickets/:id - Delete ticket');
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);

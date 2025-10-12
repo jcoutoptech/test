@@ -10,8 +10,6 @@ const validateCreateUser = (req, res) => {
 
   if (!email) {
     errors.push('Email is required');
-  } else if (typeof email !== 'string') {
-    errors.push('Email must be a string');
   } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -56,13 +54,9 @@ const validateUpdateUser = (req, res) => {
   }
 
   if (email !== undefined) {
-    if (typeof email !== 'string') {
-      errors.push('Email must be a string');
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        errors.push('Invalid email format');
-      }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      errors.push('Invalid email format');
     }
   }
 
@@ -107,7 +101,7 @@ const validateUserId = (req, res) => {
   return true;
 };
 
-const validateQueryParams = (req, res) => {
+const validateUserQueryParams = (req, res) => {
   const { role } = req.query;
 
   if (role && !['admin', 'user'].includes(role)) {
@@ -126,5 +120,5 @@ module.exports = {
   validateCreateUser,
   validateUpdateUser,
   validateUserId,
-  validateQueryParams
+  validateUserQueryParams
 };
