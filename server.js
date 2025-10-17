@@ -5,7 +5,7 @@ require('dotenv').config();
 // Import database and routes
 const { testConnection, initializeDatabase } = require('./config/database');
 const { handleUserRoutes } = require('./src/routes/userRoutes');
-const { handleTicketRoutes } = require('./src/routes/ticketRoutes');
+const { handleTaskRoutes } = require('./src/routes/taskRoutes');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -62,9 +62,9 @@ const requestHandler = async (req, res) => {
     if (!routeHandled) {
       handleNotFound(req, res);
     }
-  } else if (path.startsWith('/tickets')) {
-    // Handle ticket routes
-    const routeHandled = await handleTicketRoutes(req, res, method, path, parsedUrl);
+  } else if (path.startsWith('/tasks')) {
+    // Handle task routes
+    const routeHandled = await handleTaskRoutes(req, res, method, path, parsedUrl);
     if (!routeHandled) {
       handleNotFound(req, res);
     }
@@ -106,12 +106,12 @@ const startServer = async () => {
       console.log('  POST   /users       - Create new user');
       console.log('  PATCH  /users/:id   - Update user');
       console.log('  DELETE /users/:id   - Delete user');
-      console.log('Ticket endpoints:');
-      console.log('  GET    /tickets     - Get all tickets (with filters)');
-      console.log('  GET    /tickets/:id - Get ticket by ID');
-      console.log('  POST   /tickets     - Create new ticket (admin only)');
-      console.log('  PATCH  /tickets/:id - Update ticket');
-      console.log('  DELETE /tickets/:id - Delete ticket');
+      console.log('Task endpoints:');
+      console.log('  GET    /tasks       - Get all tasks (with filters)');
+      console.log('  GET    /tasks/:id   - Get task by ID');
+      console.log('  POST   /tasks       - Create new task (admin only)');
+      console.log('  PATCH  /tasks/:id   - Update task');
+      console.log('  DELETE /tasks/:id   - Delete task');
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);

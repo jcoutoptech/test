@@ -1,7 +1,6 @@
 const User = require('../models/User');
 
 class UserService {
-
   static async createUser(userData) {
     const { name, email, role } = userData;
 
@@ -16,26 +15,30 @@ class UserService {
       throw new Error('Invalid email format');
     }
 
-    // Check if email already exists
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) {
-      throw new Error('Email already exists');
-    }
-
     // Validate role
     const validRoles = ['admin', 'user'];
     if (role && !validRoles.includes(role)) {
-      throw new Error('Invalid role. Must be admin or user');
+      throw new Error('Invalid role. Must be either admin or user');
     }
 
-    // Create user
+    // Check if email already exists
+    const emailExists = await User.emailExists(email);
+    if (emailExists) {
+      throw new Error('Email already exists');
+    }
+
+    // Create the user
     const newUser = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       role: role || 'user'
     });
 
     return newUser;
+  }
+
+  static async getAllUsers(filters = {}) {
+    return await User.findAll(filters);
   }
 
   static async getUserById(id) {
@@ -51,67 +54,49 @@ class UserService {
     return user;
   }
 
-  static async getAllUsers(filters = {}) {
-    // Validate role filter if provided
-    if (filters.role) {
-      const validRoles = ['admin', 'user'];
-      if (!validRoles.includes(filters.role)) {
-        throw new Error('Invalid role filter. Must be admin or user');
-      }
-    }
-
-    return await User.findAll(filters);
-  }
-
   static async updateUser(id, updateData) {
     if (!id || isNaN(id)) {
       throw new Error('Valid user ID is required');
     }
 
-    // Check if user exists
-    const existingUser = await User.findById(id);
-    if (!existingUser) {
+    // Get current user
+    const currentUser = await User.findById(id);
+    if (!currentUser) {
       throw new Error('User not found');
     }
 
-    const { name, email, role } = updateData;
-    const fieldsToUpdate = {};
-
-    // Validate and prepare fields to update
-    if (name !== undefined) {
-      if (!name.trim()) {
-        throw new Error('Name cannot be empty');
-      }
-      fieldsToUpdate.name = name.trim();
-    }
-
-    if (email !== undefined) {
+    // Validate email format if provided
+    if (updateData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      if (!emailRegex.test(updateData.email)) {
         throw new Error('Invalid email format');
       }
 
       // Check if email already exists (excluding current user)
-      const emailExists = await User.emailExists(email, id);
+      const emailExists = await User.emailExists(updateData.email, id);
       if (emailExists) {
         throw new Error('Email already exists');
       }
-      fieldsToUpdate.email = email;
+
+      updateData.email = updateData.email.toLowerCase().trim();
     }
 
-    if (role !== undefined) {
+    // Validate role if provided
+    if (updateData.role) {
       const validRoles = ['admin', 'user'];
-      if (!validRoles.includes(role)) {
-        throw new Error('Invalid role. Must be admin or user');
+      if (!validRoles.includes(updateData.role)) {
+        throw new Error('Invalid role. Must be either admin or user');
       }
-      fieldsToUpdate.role = role;
     }
 
-    if (Object.keys(fieldsToUpdate).length === 0) {
-      throw new Error('No valid fields to update');
+    // Trim name if provided
+    if (updateData.name) {
+      updateData.name = updateData.name.trim();
     }
 
-    return await User.update(id, fieldsToUpdate);
+    // Update the user
+    const updatedUser = await User.update(id, updateData);
+    return updatedUser;
   }
 
   static async deleteUser(id) {
@@ -126,8 +111,6 @@ class UserService {
 
     return await User.delete(id);
   }
-
-
 }
 
 module.exports = UserService;

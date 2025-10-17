@@ -1,10 +1,10 @@
-const UserController = require('../controllers/userController');
+const TaskController = require('../controllers/taskController');
 const {
-  validateCreateUser,
-  validateUpdateUser,
-  validateUserId,
-  validateUserQueryParams
-} = require('../middleware/userValidation');
+  validateCreateTask,
+  validateUpdateTask,
+  validateTaskId,
+  validateTaskQueryParams
+} = require('../middleware/taskValidation');
 
 const parseRequestBody = (req) => {
   return new Promise((resolve, reject) => {
@@ -28,63 +28,63 @@ const parseRequestBody = (req) => {
   });
 };
 
-const handleUserRoutes = async (req, res, method, path, parsedUrl) => {
+const handleTaskRoutes = async (req, res, method, path, parsedUrl) => {
   if (method === 'post' || method === 'patch') {
     await parseRequestBody(req);
   }
 
-  // GET /users/:id
-  if (method === 'get' && path.match(/^\/users\/\d+$/)) {
+  // GET /tasks/:id
+  if (method === 'get' && path.match(/^\/tasks\/\d+$/)) {
     const id = path.split('/')[2];
     req.params = { id };
-    const validationResult = validateUserId(req, res);
+    const validationResult = validateTaskId(req, res);
     if (validationResult !== true) return true;
-    await UserController.getUserById(req, res);
+    await TaskController.getTaskById(req, res);
     return true;
   }
 
-  // GET /users (with optional query params)
-  if (method === 'get' && path === '/users') {
+  // GET /tasks (with optional query params)
+  if (method === 'get' && path === '/tasks') {
     req.query = parsedUrl.query || {};
-    const validationResult = validateUserQueryParams(req, res);
+    const validationResult = validateTaskQueryParams(req, res);
     if (validationResult !== true) return true;
-    await UserController.getAllUsers(req, res);
+    await TaskController.getAllTasks(req, res);
     return true;
   }
 
-  // POST /users
-  if (method === 'post' && path === '/users') {
-    const validationResult = validateCreateUser(req, res);
+  // POST /tasks
+  if (method === 'post' && path === '/tasks') {
+    const validationResult = validateCreateTask(req, res);
     if (validationResult !== true) return true;
-    await UserController.createUser(req, res);
+    await TaskController.createTask(req, res);
     return true;
   }
 
-  // PATCH /users/:id
-  if (method === 'patch' && path.match(/^\/users\/\d+$/)) {
+  // PATCH /tasks/:id
+  if (method === 'patch' && path.match(/^\/tasks\/\d+$/)) {
     const id = path.split('/')[2];
     req.params = { id };
-    const idValidationResult = validateUserId(req, res);
+    const idValidationResult = validateTaskId(req, res);
     if (idValidationResult !== true) return true;
-    const updateValidationResult = validateUpdateUser(req, res);
+    const updateValidationResult = validateUpdateTask(req, res);
     if (updateValidationResult !== true) return true;
-    await UserController.updateUser(req, res);
+    await TaskController.updateTask(req, res);
     return true;
   }
 
-  // DELETE /users/:id
-  if (method === 'delete' && path.match(/^\/users\/\d+$/)) {
+  // DELETE /tasks/:id
+  if (method === 'delete' && path.match(/^\/tasks\/\d+$/)) {
     const id = path.split('/')[2];
     req.params = { id };
-    const validationResult = validateUserId(req, res);
+    const validationResult = validateTaskId(req, res);
     if (validationResult !== true) return true;
-    await UserController.deleteUser(req, res);
+    await TaskController.deleteTask(req, res);
     return true;
   }
 
-  // Check if it's a valid user path but invalid method
-  if (path === '/users' || path.match(/^\/users\/\d+$/)) {
-    // Valid user path but invalid method - return 405
+  // Check if it's a valid task path but invalid method
+  if (path === '/tasks' || path.match(/^\/tasks\/\d+$/)) {
+    // Valid task path but invalid method - return 405
     res.writeHead(405, {
       'Content-Type': 'application/json',
       'Allow': 'GET, POST, PATCH, DELETE'
@@ -102,10 +102,6 @@ const handleUserRoutes = async (req, res, method, path, parsedUrl) => {
   return false;
 };
 
-
-
-
-
 module.exports = {
-  handleUserRoutes
+  handleTaskRoutes
 };

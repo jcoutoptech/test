@@ -1,62 +1,73 @@
 # Jira-like Board Application
 
-A simplified Jira-like project management system built with vanilla Node.js and PostgreSQL. This application provides essential ticket management functionality with a clean, minimal architecture.
+A simplified Jira-like project management system built with vanilla Node.js and MySQL. This application provides essential task management functionality with a clean, minimal architecture.
 
 **Database Entities:**
-- **Users** (1) - Manages user accounts with role-based permissions
-- **Tickets** (Many) - Project tasks with status tracking and assignment capabilities
-- **Relationship**: One-to-Many (Users can create/be assigned multiple tickets)
+- **Users** - Manages user accounts with role-based permissions (includes JSON array of task IDs)
+- **Tasks** - Project tasks with status tracking and assignment capabilities
+- **Relationship** - Simple 1-to-many: Users can create/be assigned to multiple tasks
 
 ## Database Schema
 
 ### Users Table
 ```sql
-- id: SERIAL PRIMARY KEY
+- id: INT AUTO_INCREMENT PRIMARY KEY
 - name: VARCHAR(255) NOT NULL
-- email: VARCHAR(255) UNIQUE NOT NULL  
-- role: VARCHAR(50) DEFAULT 'user' CHECK (role IN ('admin', 'user'))
-- tickets: INTEGER[] DEFAULT '{}' -- Array of ticket IDs
+- email: VARCHAR(255) UNIQUE NOT NULL
+- role: ENUM('admin', 'user') DEFAULT 'user'
+- tasks: JSON DEFAULT (JSON_ARRAY()) -- Array of task IDs
 - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-- updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ```
 
-### Tickets Table
+### Tasks Table
 ```sql
-- id: SERIAL PRIMARY KEY
+- id: INT AUTO_INCREMENT PRIMARY KEY
 - title: VARCHAR(255) NOT NULL
 - description: TEXT
-- priority: VARCHAR(50) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical'))
-- status: VARCHAR(50) DEFAULT 'backlog' CHECK (status IN ('backlog', 'todo', 'in_progress', 'review', 'done'))
-- created_by: INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
-- assigned_to: INTEGER REFERENCES users(id) ON DELETE SET NULL
+- priority: ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium'
+- status: ENUM('backlog', 'todo', 'in_progress', 'review', 'done') DEFAULT 'backlog'
+- created_by: INT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+- assigned_to: INT REFERENCES users(id) ON DELETE SET NULL
 - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-- updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ```
+
+
 
 ## API Endpoints
 
 ### User Management
 ```
 GET    /users              - Get all users (with optional role filter)
-GET    /users/:id          - Get user by ID 
+GET    /users/:id          - Get user by ID (includes task relationships)
 POST   /users              - Create new user
 PATCH  /users/:id          - Update user details
 DELETE /users/:id          - Delete user
 ```
 
-### Ticket Management
+### Task Management
 ```
-GET    /tickets            - Get all tickets (with optional filters)
-GET    /tickets/:id        - Get ticket by ID
-POST   /tickets            - Create new ticket (admin only)
-PATCH  /tickets/:id        - Update ticket (status, assignment, etc.)
-DELETE /tickets/:id        - Delete ticket
+GET    /tasks              - Get all tasks (with optional filters)
+GET    /tasks/:id          - Get task by ID
+POST   /tasks              - Create new task (admin only)
+PATCH  /tasks/:id          - Update task (status, assignment, etc.)
+DELETE /tasks/:id          - Delete task
 ```
+
+**Query Parameters for GET /tasks:**
+- `status` - Filter by status (backlog, todo, in_progress, review, done)
+- `priority` - Filter by priority (low, medium, high, critical)
+- `createdBy` - Filter by creator user ID
+- `assignedTo` - Filter by assigned user ID
+
+**Query Parameters for GET /users:**
+- `role` - Filter users by role (admin or user)
 
 ## Authorization
 
-- **Ticket Creation**: Only users with `admin` role can create tickets
-- **Other Operations**: All authenticated users can view, update, and manage tickets
+- **Task Creation**: Only users with `admin` role can create tasks
+- **Other Operations**: All authenticated users can view, update, and manage tasks
 - **Error Handling**: Returns `401 Unauthorized` for insufficient permissions
 
 ## Frontend Perspectives
@@ -64,20 +75,20 @@ DELETE /tickets/:id        - Delete ticket
 The API is designed to support these frontend views:
 
 ### Board View
-- **Endpoint**: `GET /tickets?status=in_progress` or `GET /tickets?status=review`
+- **Endpoint**: `GET /tasks?status=in_progress` or `GET /tasks?status=review`
 - **Purpose**: Kanban-style board showing active work
 
-### Backlog View  
-- **Endpoint**: `GET /tickets?status=backlog`
-- **Purpose**: List of pending tickets awaiting assignment
+### Backlog View
+- **Endpoint**: `GET /tasks?status=backlog`
+- **Purpose**: List of pending tasks awaiting assignment
 
 ### Completed View
-- **Endpoint**: `GET /tickets?status=done`
+- **Endpoint**: `GET /tasks?status=done`
 - **Purpose**: Archive of finished work
 
-### Ticket Detail View
-- **Endpoint**: `GET /tickets/:id`
-- **Purpose**: Individual ticket management and updates
+### Task Detail View
+- **Endpoint**: `GET /tasks/:id`
+- **Purpose**: Individual task management and updates
 
 ### Installation
 1. Clone the repository
@@ -90,10 +101,10 @@ The API is designed to support these frontend views:
    PORT=3000
    NODE_ENV=development
    DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=jira_board
-   DB_USER=postgres
-   DB_PASSWORD=your_password
+   DB_PORT=3306
+   DB_NAME=sh_db
+   DB_USER=root
+   DB_PASSWORD=password
    ```
 4. Start the server:
    ```bash
@@ -106,19 +117,19 @@ The API is designed to support these frontend views:
 src/
 ├── controllers/           # HTTP request/response handling
 │   ├── userController.js
-│   └── ticketController.js
+│   └── taskController.js
 ├── middleware/           # Validation logic
 │   ├── userValidation.js
-│   └── ticketValidation.js
+│   └── taskValidation.js
 ├── models/              # Database models
 │   ├── User.js
-│   └── Ticket.js
+│   └── Task.js
 ├── routes/              # Route handling
 │   ├── userRoutes.js
-│   └── ticketRoutes.js
+│   └── taskRoutes.js
 └── services/            # Business logic
     ├── userService.js
-    └── ticketService.js
+    └── taskService.js
 config/
 └── database.js          # Database configuration
 ```
